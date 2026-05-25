@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="bg" translate="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>България — Три Дни</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<style>
+  :root {
+    --ink:     #0e0d0b;
+    --paper:   #f0ebe0;
+    --gold:    #c9a84c;
+    --gold-lt: #e2c97e;
+    --gold-dim:#8a6f30;
+    --panel:   #181510;
+    --panel2:  #201d16;
+    --panel3:  #272318;
+    --border:  rgba(201,168,76,.15);
+    --border2: rgba(201,168,76,.30);
+    --serif:   'Cormorant Garamond', Georgia, serif;
+    --display: 'Cinzel', serif;
+    --mono:    'DM Mono', monospace;
+    --text-body: rgba(240,235,224,.82);
+    --text-muted: rgba(240,235,224,.45);
+
+    /* ── Sizing tokens — override per breakpoint ── */
+    --sidebar-w:      390px;
+    --masthead-pad:   26px 24px 20px;
+    --h1-size:        40px;
+    --sub-size:       19px;
+    --caption-size:   8px;
+    --eyebrow-size:   8.5px;
+    --scroll-pad:     16px;
+    --card-gap:       12px;
+    --day-tab-w:      54px;
+    --day-num-size:   20px;
+    --day-word-size:  7px;
+    --card-info-pad:  13px 15px;
+    --city-size:      21px;
+    --tagline-size:   13px;
+    --attr-pad:       10px 14px 10px 16px;
+    --attr-name-size: 15px;
+    --attr-type-size: 8px;
+    --attr-rat-size:  9.5px;
+    --attr-body-pad:  0 16px 14px 32px;
+    --fact-label-sz:  7.5px;
+    --fact-val-sz:    12.5px;
+    --desc-size:      13.5px;
+    --tip-size:       9px;
+    --badge-num-sz:   30px;
+    --badge-label-sz: 9px;
+    --pop-city-sz:    14px;
+    --pop-name-sz:    13px;
+    --pop-stars-sz:   10px;
+    --pop-stay-sz:    8px;
+    --touch-min:      44px;  /* WCAG minimum touch target */
+  }
+
+  /* ═══ TV / large screen (≥1400px) ══════════════════════════════════════ */
+  @media (min-width: 1400px) {
+    :root {
+      --sidebar-w:      520px;
+      --masthead-pad:   36px 32px 28px;
+      --h1-size:        54px;
+      --sub-size:       26px;
+      --caption-size:   10px;
+      --eyebrow-size:   10px;
+      --scroll-pad:     20px;
+      --card-gap:       16px;
+      --day-tab-w:      72px;
+      --day-num-size:   28px;
+      --day-word-size:  9px;
+      --card-info-pad:  18px 20px;
+      --city-size:      28px;
+      --tagline-size:   16px;
+      --attr-pad:       16px 18px 16px 22px;
+      --attr-name-size: 20px;
+      --attr-type-size: 10px;
+      --attr-rat-size:  12px;
+      --attr-body-pad:  0 22px 18px 42px;
+      --fact-label-sz:  9.5px;
+      --fact-val-sz:    16px;
+      --desc-size:      17px;
+      --tip-size:       11px;
+      --badge-num-sz:   42px;
+      --badge-label-sz: 11px;
+      --pop-city-sz:    18px;
+      --pop-name-sz:    16px;
+      --pop-stars-sz:   13px;
+      --pop-stay-sz:    10px;
+      --touch-min:      56px;
+    }
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* Improve touch on all interactive elements */
+  * { -webkit-tap-highlight-color: rgba(201,168,76,.15); }
+
+  body {
+    font-family: var(--serif);
+    background: var(--ink);
+    color: var(--paper);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    touch-action: manipulation;
+  }
+
+  /* ═══ SIDEBAR ══════════════════════════════════════════════════════════ */
+  .sidebar {
+    width: var(--sidebar-w);
+    flex-shrink: 0;
+    background: var(--panel);
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border2);
+    z-index: 10;
+  }
+
+  /* ═══ MASTHEAD ═════════════════════════════════════════════════════════ */
+  .masthead {
+    padding: var(--masthead-pad);
+    border-bottom: 1px solid var(--border2);
+  }
+
+  .masthead-eyebrow {
+    font-family: var(--mono);
+    font-size: var(--eyebrow-size);
+    letter-spacing: .28em;
+    color: var(--gold);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .masthead-eyebrow::before,
+  .masthead-eyebrow::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--gold);
+    opacity: .35;
+  }
+
+  .masthead h1 {
+    font-family: var(--display);
+    font-size: var(--h1-size);
+    font-weight: 400;
+    letter-spacing: .07em;
+    color: var(--paper);
+    line-height: 1;
+  }
+
+  .masthead-sub-italic {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 300;
+    font-size: var(--sub-size);
+    color: var(--gold);
+    letter-spacing: .04em;
+    display: block;
+    margin-top: 3px;
+  }
+
+  .masthead-caption {
+    font-family: var(--mono);
+    font-size: var(--caption-size);
+    letter-spacing: .2em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-top: 12px;
+  }
+
+  /* ═══ SCROLL ════════════════════════════════════════════════════════════ */
+  .scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--scroll-pad);
+    /* Smooth momentum scroll on iOS / tvOS */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  .scroll::-webkit-scrollbar { width: 3px; }
+  .scroll::-webkit-scrollbar-track { background: transparent; }
+  .scroll::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 2px; }
+
+  /* ═══ DAY CARDS ═════════════════════════════════════════════════════════ */
+  .day-card {
+    margin-bottom: var(--card-gap);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color .25s;
+  }
+  .day-card:hover { border-color: var(--border2); }
+  .day-card.active { border-color: var(--gold); }
+
+  .card-head {
+    display: flex;
+    align-items: stretch;
+    min-height: var(--touch-min);
+  }
+
+  .day-tab {
+    width: var(--day-tab-w);
+    flex-shrink: 0;
+    background: var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 0;
+    border-right: 1px solid var(--border);
+    transition: background .25s;
+  }
+  .day-card.active .day-tab { background: var(--gold); }
+
+  .day-num {
+    font-family: var(--display);
+    font-size: var(--day-num-size);
+    color: var(--paper);
+    line-height: 1;
+  }
+  .day-card.active .day-num { color: var(--ink); }
+
+  .day-word {
+    font-family: var(--mono);
+    font-size: var(--day-word-size);
+    letter-spacing: .18em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-top: 3px;
+  }
+  .day-card.active .day-word { color: rgba(14,13,11,.55); }
+
+  .card-info {
+    padding: var(--card-info-pad);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .card-city {
+    font-family: var(--serif);
+    font-size: var(--city-size);
+    font-weight: 600;
+    color: var(--paper);
+    line-height: 1.1;
+  }
+  .card-tagline {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: var(--tagline-size);
+    color: var(--gold-lt);
+    opacity: .65;
+    margin-top: 3px;
+  }
+
+  /* ═══ ATTRACTION ROWS ══════════════════════════════════════════════════ */
+  .attractions { border-top: 1px solid var(--border); }
+
+  .attr-row {
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .attr-row:last-child { border-bottom: none; }
+  .attr-row:hover { background: rgba(201,168,76,.04); }
+  .attr-row.open { background: var(--panel3); }
+
+  .attr-header {
+    display: flex;
+    align-items: center;
+    padding: var(--attr-pad);
+    gap: 8px;
+    min-height: var(--touch-min);
+  }
+
+  .attr-accent {
+    width: 2px;
+    height: 28px;
+    background: var(--border2);
+    flex-shrink: 0;
+    border-radius: 1px;
+    transition: background .2s;
+  }
+  .attr-row.open .attr-accent { background: var(--gold); }
+
+  .attr-header-text { flex: 1; min-width: 0; }
+
+  .attr-name {
+    font-family: var(--serif);
+    font-size: var(--attr-name-size);
+    font-weight: 600;
+    color: var(--paper);
+    line-height: 1.2;
+  }
+  .attr-row.open .attr-name { color: var(--gold-lt); }
+
+  .attr-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 3px;
+    flex-wrap: wrap;
+  }
+  .attr-type {
+    font-family: var(--mono);
+    font-size: var(--attr-type-size);
+    letter-spacing: .14em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+  .attr-rating {
+    font-family: var(--mono);
+    font-size: var(--attr-rat-size);
+    color: var(--gold);
+    letter-spacing: .02em;
+  }
+
+  .attr-chevron {
+    width: var(--touch-min);
+    height: var(--touch-min);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    opacity: .45;
+    transition: opacity .2s, transform .25s;
+  }
+  .attr-chevron svg {
+    width: 12px; height: 8px;
+    fill: none;
+    stroke: var(--gold);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+  }
+  .attr-row.open .attr-chevron { opacity: 1; transform: rotate(180deg); }
+
+  .attr-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height .35s cubic-bezier(.4,0,.2,1);
+  }
+  .attr-row.open .attr-body { max-height: 700px; }
+
+  .attr-body-inner {
+    padding: var(--attr-body-pad);
+    border-top: 1px solid var(--border);
+  }
+
+  .attr-facts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 16px;
+    margin-bottom: 12px;
+    padding-top: 12px;
+  }
+  .fact {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .fact-label {
+    font-family: var(--mono);
+    font-size: var(--fact-label-sz);
+    letter-spacing: .18em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+  .fact-value {
+    font-family: var(--serif);
+    font-size: var(--fact-val-sz);
+    color: var(--text-body);
+    line-height: 1.3;
+  }
+
+  .attr-desc {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: var(--desc-size);
+    color: var(--text-body);
+    line-height: 1.75;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+  }
+
+  .attr-tip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+    background: rgba(201,168,76,.08);
+    border: 1px solid var(--border2);
+    border-radius: 2px;
+    padding: 7px 11px;
+    font-family: var(--mono);
+    font-size: var(--tip-size);
+    letter-spacing: .1em;
+    color: var(--gold-lt);
+    line-height: 1.5;
+  }
+  .attr-tip-dot {
+    width: 6px; height: 6px;
+    background: var(--gold);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ═══ MAP ════════════════════════════════════════════════════════════════ */
+  .map-wrap { flex: 1; position: relative; }
+  #map { width: 100%; height: 100%; }
+  .leaflet-tile-pane { filter: saturate(.18) brightness(.5) contrast(1.15); }
+
+  /* Bigger zoom buttons on TV */
+  .leaflet-control-zoom a {
+    width: var(--touch-min) !important;
+    height: var(--touch-min) !important;
+    line-height: var(--touch-min) !important;
+    font-size: 20px !important;
+  }
+
+  .leaflet-popup-content-wrapper {
+    background: var(--panel2) !important;
+    border: 1px solid var(--gold) !important;
+    border-radius: 3px !important;
+    box-shadow: 0 12px 40px rgba(0,0,0,.7) !important;
+    font-family: var(--serif) !important;
+    padding: 0 !important;
+  }
+  .leaflet-popup-content { margin: 0 !important; }
+  .leaflet-popup-tip-container { display: none !important; }
+  .leaflet-popup-close-button {
+    color: var(--gold) !important;
+    top: 8px !important; right: 8px !important;
+    font-size: 22px !important;
+    width: 32px !important; height: 32px !important;
+    line-height: 30px !important;
+    text-align: center !important;
+  }
+
+  .pop { padding: 16px 18px; min-width: 220px; }
+  .pop-city {
+    font-family: var(--display);
+    font-size: var(--pop-city-sz);
+    letter-spacing: .1em;
+    color: var(--gold);
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border2);
+  }
+  .pop-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 14px;
+  }
+  .pop-row:last-of-type { border-bottom: none; }
+  .pop-name {
+    font-family: var(--serif);
+    font-size: var(--pop-name-sz);
+    color: var(--text-body);
+    line-height: 1.3;
+    flex: 1;
+  }
+  .pop-stars {
+    font-family: var(--mono);
+    font-size: var(--pop-stars-sz);
+    color: var(--gold);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .pop-stay {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border2);
+    font-family: var(--mono);
+    font-size: var(--pop-stay-sz);
+    letter-spacing: .15em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    line-height: 1.5;
+  }
+
+  /* ═══ MAP BADGE ═════════════════════════════════════════════════════════ */
+  .map-badge {
+    position: absolute;
+    top: 20px; right: 20px;
+    z-index: 500;
+    pointer-events: none;
+    background: var(--panel);
+    border: 1px solid var(--gold);
+    padding: 10px 18px;
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+  }
+  .badge-num {
+    font-family: var(--display);
+    font-size: var(--badge-num-sz);
+    color: var(--gold);
+    line-height: 1;
+  }
+  .badge-label {
+    font-family: var(--mono);
+    font-size: var(--badge-label-sz);
+    letter-spacing: .22em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  /* ═══ TABLET (768px – 1399px) ═══════════════════════════════════════════ */
+  @media (max-width: 1399px) and (min-width: 769px) {
+    :root {
+      --sidebar-w: 340px;
+    }
+  }
+
+  /* ═══ MOBILE / PORTRAIT (≤768px) ════════════════════════════════════════ */
+  @media (max-width: 768px) {
+    body { flex-direction: column; overflow: hidden; }
+
+    .sidebar {
+      width: 100%;
+      /* show roughly 2.5 cards so user knows to scroll */
+      height: 46vh;
+      border-right: none;
+      border-bottom: 1px solid var(--border2);
+    }
+
+    .masthead {
+      padding: 16px 18px 12px;
+    }
+
+    .masthead h1 { font-size: 28px; }
+    .masthead-sub-italic { font-size: 14px; }
+    .masthead-eyebrow { font-size: 7.5px; margin-bottom: 8px; }
+    .masthead-caption { margin-top: 6px; }
+
+    .scroll { padding: 10px 12px 20px; }
+
+    .day-card { margin-bottom: 8px; }
+
+    .card-head { min-height: 52px; }
+
+    .day-tab { width: 48px; }
+
+    .card-info { padding: 10px 12px; }
+    .card-city { font-size: 18px; }
+    .card-tagline { font-size: 12px; }
+
+    .attr-header { padding: 10px 12px 10px 14px; min-height: 48px; }
+    .attr-name { font-size: 14px; }
+    .attr-type { font-size: 7.5px; }
+    .attr-rating { font-size: 9px; }
+    .attr-chevron { width: 40px; height: 40px; }
+
+    .attr-body-inner { padding: 0 12px 12px 26px; }
+    .attr-facts { grid-template-columns: 1fr 1fr; gap: 6px 10px; }
+    .fact-value { font-size: 12px; }
+    .attr-desc { font-size: 13px; }
+    .attr-tip { font-size: 8.5px; }
+
+    .map-wrap { height: 54vh; }
+    .map-badge { top: 12px; right: 12px; padding: 6px 12px; }
+    .badge-num { font-size: 22px; }
+    .badge-label { font-size: 8px; }
+  }
+
+  /* ═══ Very small phones (≤380px) ════════════════════════════════════════ */
+  /* ═══ STAY BLOCK ════════════════════════════════════════════════════════ */
+  .card-stay {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 10px 14px 10px 16px;
+    border-top: 1px solid var(--border);
+    background: rgba(201,168,76,.04);
+  }
+
+  .stay-icon {
+    font-size: 14px;
+    color: var(--gold);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .stay-text {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .13em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    line-height: 1.65;
+  }
+
+  @media (min-width: 1400px) {
+    .stay-text { font-size: 11px; }
+  }
+
+  
+  /* ═══ LANDMARK MARKERS ══════════════════════════════════════════════════ */
+  .lm-marker { cursor: pointer !important; }
+
+  .lm-pin {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    transition: transform .2s;
+  }
+
+  .lm-marker:hover .lm-pin { transform: scale(1.18) translateY(-3px); }
+
+  .lm-label {
+    position: absolute;
+    bottom: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'DM Mono', monospace;
+    font-size: 7.5px;
+    letter-spacing: .14em;
+    color: #c9a84c;
+    text-transform: uppercase;
+    white-space: nowrap;
+    background: rgba(14,13,11,.75);
+    padding: 2px 5px;
+    border-radius: 1px;
+    pointer-events: none;
+  }
+
+
+  /* ═══ DISTANCE PILL — sits BETWEEN cards, outside card border ═══════════ */
+  .dist-pill {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 6px 0 10px;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .16em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    background: transparent;
+    pointer-events: none;
+  }
+
+  .dist-pill-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+    max-width: 40px;
+  }
+
+  .dist-pill-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--panel2);
+    border: 1px solid var(--border2);
+    border-radius: 2px;
+    padding: 4px 10px;
+    color: var(--gold-dim);
+    white-space: nowrap;
+  }
+
+  .dist-pill-arrow {
+    color: var(--gold);
+    font-size: 9px;
+    opacity: .7;
+  }
+
+  @media (min-width: 1400px) {
+    .dist-pill { font-size: 11px; padding: 8px 0 12px; }
+  }
+
+</style>
+
+<!-- ═══ DATA — safe JSON, no JS string escaping issues ═══ -->
+<script id="travelData" type="application/json">
+[
+  {
+    "city": "Пловдив",
+    "tagline": "Най-старият жив град в Европа",
+    "coords": [42.1533, 24.7474],
+    "zoom": 14,
+    "distNext": "103 км · ~1ч 30мин до Казанлък",
+    "attractions": [
+      {
+        "name": "Античен театър",
+        "type": "Римска архитектура",
+        "rating": "4.7",
+        "facts": {
+          "Построен": "I в. сл. Хр.",
+          "Вход": "8 лв (възрастни)",
+          "Вместимост": "5 000 – 7 000 места",
+          "Диаметър": "82 метра"
+        },
+        "tip": "Пристигнете рано — за концерти е нужна предварителна резервация",
+        "desc": "Построен по времето на император Траян, театърът на Филипопол е един от най-добре запазените римски театри в света. С 28 концентрични реда мраморни седалки, той е вмествал до 7 000 зрители. Открит при разкопки от 1968 до 1979 г., днес продължава да приема оперни, театрални и рок концерти — акустиката остава безупречна след две хиляди години."
+      },
+      {
+        "name": "Хиндлиянова къща",
+        "type": "Национално възраждане",
+        "rating": "4.8",
+        "facts": {
+          "Построена": "1834 – 1835 г.",
+          "Вход": "5 лв",
+          "Работно Време": "9:30 – 18:00 (вт–нд)",
+          "Собственик": "Степан Хиндлиян"
+        },
+        "tip": "Не пропускайте фонтана с розова вода на втория етаж — все още работи",
+        "desc": "Построена за богатия арменски търговец Степан Хиндлиян, чието прозвище идва от търговията му с Индия. Едната от четирите най-богати арменски фамилии в Пловдив, той е изградил дом, чийто всеки детайл говори за разкош. Стените са украсени с алафранги — рисувани пейзажи на Венеция, Александрия и Константинопол. Банята с горещо течаща вода по принципа на римските хипокаусти остава единствената запазена от епохата в България."
+      },
+      {
+        "name": "Небет тепе",
+        "type": "Тракийска крепост",
+        "rating": "4.6",
+        "facts": {
+          "Епоха": "ок. 5000 г. пр. Хр.",
+          "Вход": "Безплатно",
+          "Гледка": "360° панорама",
+          "Цивилизации": "14+ исторически пласта"
+        },
+        "tip": "Идеално за снимки по залез — Родопите се виждат на юг",
+        "desc": "Най-високият от трите хълма на Пловдив е обитаван непрекъснато в продължение на 7 000 години — от неолита до наши дни. Тракийската крепост Евмолпия по-късно се превръща в римски Филипопол. От върха се открива панорама на 360°: на юг Родопите, на север Балкана. Археолозите са открили следи от поне 14 различни цивилизации в пластовете под краката ви."
+      }
+    ]
+  },
+  {
+    "city": "Розовата долина",
+    "tagline": "Сърцето на тракийските царе",
+    "coords": [42.6186, 25.4058],
+    "zoom": 13,
+    "distNext": "91 км · ~1ч 25мин до Велико Търново",
+    "stay": "Kings Valley Medical & Spa Hotel · 5 звезди · от 152 USD/нощ  |  Hotel Palas · 4 звезди · от 51 EUR/нощ",
+    "attractions": [
+      {
+        "name": "Тракийска гробница",
+        "type": "ЮНЕСКО световно наследство",
+        "rating": "4.4",
+        "facts": {
+          "Построена": "IV в. пр. Хр.",
+          "ЮНЕСКО": "От 1979 г.",
+          "Открита": "1944 г. (случайно)",
+          "Вход": "Само копие (оригинал затворен)"
+        },
+        "tip": "Посетете и близкия музей Искра за контекст — над 50 000 артефакта",
+        "desc": "Открита по случайност от български войници, копаещи окопи през 1944 г., гробницата на Казанлък е първият български паметник в списъка на ЮНЕСКО. Tholos с тесен коридор и кръгла погребална камера, цялата покрита с изключително запазени фрески, изобразяващи тракийски ритуален пир: двойка с музиканти, слуги и надбягване с колесници. Трите фриза ползват бяло, черно и червено, постигнати с минерални пигменти."
+      },
+      {
+        "name": "Розовата долина",
+        "type": "Природа и производство",
+        "rating": "4.5",
+        "facts": {
+          "Сезон": "Май – юни (цъфтеж)",
+          "Производство": "70% от световното розово масло",
+          "Произход": "Роза дамаскена от Сирия",
+          "История": "Внесена 1664 г."
+        },
+        "tip": "Фестивалът на розата е в началото на юни — препоръчваме предварителни хотели",
+        "desc": "Казанлъшката котловина произвежда около 70% от световното розово масло — над три тона годишно. Розата дамаскена е внесена от Сирия в XVII в., а климатът и почвата на долината се оказват по-подходящи дори от нейната родина. При ранна утрин поле след поле разцъфтява в розово и наситеният аромат остава незабравим. В долината се намират и над 1 500 тракийски могили — само 300 са проучени досега."
+      },
+      {
+        "name": "Музей на розата",
+        "type": "Уникален музей",
+        "rating": "4.3",
+        "facts": {
+          "Eкспонати": "15 000+",
+          "Работно Време": "9:00 – 17:00",
+          "Вход": "5 лв",
+          "Уникалност": "Единственият в света"
+        },
+        "tip": "Единственият музей от подобен вид в света — не го пропускайте",
+        "desc": "Единственият музей на розата в света съхранява над 15 000 експоната, посветени на историята на розовото масло и традициите около бране на рози в България. Тук ще видите исторически дестилационни апарати, оригинален инструментариум и снимки от фестивалите. Музеят е само на 15 минути пеша от центъра на Казанлък."
+      }
+    ]
+  },
+  {
+    "city": "Велико Търново",
+    "tagline": "Средновековна столица на Балканите",
+    "coords": [43.0828, 25.6281],
+    "zoom": 14,
+    "distNext": null,
+    "stay": "Bey House Royal Hotel · 5 звезди · от 233 USD/нощ  |  Hotel Gurko · 3 звезди · от 32 USD/нощ",
+    "attractions": [
+      {
+        "name": "Царевец",
+        "type": "Средновековна крепост",
+        "rating": "4.7",
+        "facts": {
+          "Период": "XII – XIV в.",
+          "Вход": "10 лв",
+          "Площ": "4.5 ха, 400+ сгради",
+          "Столица": "Второ Българско Царство"
+        },
+        "tip": "Носете удобни обувки — терена е неравен, без ограждения по стените",
+        "desc": "Цитадела на Второто Българско Царство (1185–1393), Царевец е бил едновременно царски дворец, патриаршески престол и укрепен град с повече от 400 жилищни сгради и 22 църкви. Сравняван от съвременниците с Рим и Константинопол, хълмът е заобиколен от река Янтра от три страни. В северния край се издига Скалата на смъртта, от която са хвърляли предатели. Разкопките, започнали в 1886 г., продължават и днес."
+      },
+      {
+        "name": "Звук и светлина",
+        "type": "Аудиовизуален спектакъл",
+        "rating": "4.8",
+        "facts": {
+          "От": "1985 г.",
+          "Продължителност": "около 30 мин.",
+          "Лазери": "3 цветни лазера",
+          "Сценарий": "от 681 до 1393 г."
+        },
+        "tip": "Показва се уикенди и национални празници — проверете датите предварително",
+        "desc": "Организиран за пръв път в 1985 г. за 800-годишнината на Въстанието на Асен и Петър, спектакълът е дело на българско-чехословашки екип. Три лазера, многоцветни прожекции, драматична музика и камбани на Патриаршеската катедрала разказват историята на България от основаването й в 681 г. до падането на Търново под османска власт в 1393 г. За над 40 години не е имало нито едно техническо прекъсване."
+      },
+      {
+        "name": "Балдуинова кула",
+        "type": "Историческа забележителност",
+        "rating": "4.5",
+        "facts": {
+          "Легенда": "Затвор на Балдуин I (1205 г.)",
+          "Гледка": "Панорама над река Янтра",
+          "Вход": "Включено в билета за Царевец",
+          "Битка": "Одрин, 1205 г."
+        },
+        "tip": "Вижте кулата рано сутринта — мъглата над Янтра е феерична",
+        "desc": "По легенда именно тук е бил затворен Балдуин I, латинският Император на Константинопол, след като Цар Калоян го разбил в битката при Одрин (1205). Кулата е реставрирана и днес стои на ръба на хълма, надвисвайки над реката. Видяна от противоположния бряг на Янтра, заедно с Патриаршеската катедрала, тя формира силуета, заради който Велико Търново е толкова фотогенично."
+      }
+    ]
+  }
+]
+</script>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="masthead">
+    <div class="masthead-eyebrow">Пътен дневник</div>
+    <h1>
+      България
+      <span class="masthead-sub-italic">три дни</span>
+    </h1>
+    <p class="masthead-caption">История &amp; Култура — Маршрут</p>
+  </div>
+  <div class="scroll">
+    <div id="daysList"></div>
+  </div>
+</aside>
+
+<div class="map-wrap">
+  <div id="map"></div>
+  <div class="map-badge">
+    <span class="badge-num" id="badgeNum">01</span>
+    <span class="badge-label">ден</span>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const days = JSON.parse(document.getElementById('travelData').textContent);
+
+// ── Side landmarks ─────────────────────────────────────────────────────────
+// All use the same gold-hexagon HTML marker; tooltip on hover, popup on click
+const landmarks = [
+  {
+    name: "Проход на Републиката",
+    label: "Природа",
+    coords: [42.890, 25.6489],
+    detour: "На маршрута (път II-55)",
+    note: "Планинският проход по пътя Гурково–Велико Търново (II-55), през който реално минава маршрутът Казанлък–Велико Търново. Живописен горист участък — не изисква никакво отклонение."
+  },
+  {
+    name: "Шипченска църква",
+    label: "Религия",
+    coords: [42.7161, 25.3233],
+    detour: "13 км от Казанлък",
+    note: "Руски православен мемориален храм с 17 позлатени купола, издигнат в памет на загиналите при Освободителната война (1877–78). Отклонение от Казанлък — 12 км на север през с. Шипка."
+  },
+  {
+    name: "Паметник Бузлуджа",
+    label: "Архитектура",
+    coords: [42.7358, 25.3939],
+    detour: "20 км от Шипка",
+    note: "Изоставен комунистически паметник–НЛО на връх Хаджи Димитър (1 432 м). Архитектурна забележителност с уникална форма и зашеметяващи гледки."
+  },
+  {
+    name: "Гробница на Севт III",
+    label: "Археология",
+    coords: [42.7, 25.333],
+    detour: "13 км от Казанлък",
+    note: "Голяма Косматка — тракийска гробница на одриския цар Севт III, IV в. пр. Хр. Богата находка от злато, бронзови шлемове и уникална портретна маска."
+  },
+  {
+    name: "Етнографски комплекс Етара",
+    label: "Култура",
+    coords: [42.8553, 25.3172],
+    detour: "55 км преди Велико Търново",
+    note: "Музей-село с работещи занаятчийски работилници от епохата на Възраждането — грънчари, дърворезбари, медникари. Намира се в покрайнините на Габрово."
+  },
+  {
+    name: "Арбанаси",
+    label: "История",
+    coords: [43.099, 25.667],
+    detour: "11 км от Велико Търново",
+    note: "Средновековно село с 5 крепостни църкви и богато украсени търговски имения от XVII–XVIII в. Обявено за архитектурен резерват. На хълм с гледка към Търново."
+  }
+];
+
+// ── Tooltip state ──────────────────────────────────────────────────────────
+let tooltip = null;
+
+function createTooltip() {
+  tooltip = document.createElement('div');
+  tooltip.id = 'lm-tooltip';
+  tooltip.style.cssText = [
+    'position:fixed',
+    'z-index:9000',
+    'pointer-events:none',
+    'background:#181510',
+    'border:1px solid #c9a84c',
+    'border-radius:3px',
+    'padding:10px 14px',
+    'max-width:240px',
+    'box-shadow:0 8px 28px rgba(0,0,0,.7)',
+    'opacity:0',
+    'transition:opacity .18s',
+    'font-family:"Cormorant Garamond",Georgia,serif'
+  ].join(';');
+  document.body.appendChild(tooltip);
+}
+
+function showTooltip(e, lm) {
+  if (!tooltip) createTooltip();
+  tooltip.innerHTML =
+    '<div style="font-family:\'DM Mono\',monospace;font-size:8.5px;letter-spacing:.22em;color:#c9a84c;text-transform:uppercase;margin-bottom:5px">'
+    + lm.label + ' &nbsp;·&nbsp; ' + lm.detour
+    + '</div>'
+    + '<div style="font-size:15px;font-weight:600;color:#f0ebe0;margin-bottom:6px;line-height:1.1">' + lm.name + '</div>'
+    + '<div style="font-style:italic;font-size:12.5px;color:rgba(240,235,224,.75);line-height:1.65">' + lm.note + '</div>';
+  moveTooltip(e);
+  tooltip.style.opacity = '1';
+}
+
+function moveTooltip(e) {
+  if (!tooltip) return;
+  var x = e.clientX + 16, y = e.clientY - 10;
+  var tw = tooltip.offsetWidth || 240;
+  if (x + tw > window.innerWidth - 8) x = e.clientX - tw - 16;
+  tooltip.style.left = x + 'px';
+  tooltip.style.top  = y + 'px';
+}
+
+function hideTooltip() {
+  if (tooltip) tooltip.style.opacity = '0';
+}
+
+// ── State ──────────────────────────────────────────────────────────────────
+let map, markers = [], activeDay = 0, flyTimer = null;
+
+// ── Map init ───────────────────────────────────────────────────────────────
+function initMap() {
+  map = L.map('map', { zoomControl: false }).setView([42.75, 25.45], 9);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap', maxZoom: 18
+  }).addTo(map);
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+  // ── Main day markers (gold pin with number) ────────────────────────────
+  days.forEach(function(d, i) {
+    var num = i + 1;
+    var icon = L.divIcon({
+      className: '',
+      iconAnchor: [20, 52],
+      popupAnchor: [0, -54],
+      html: '<div style="position:relative;width:40px;height:56px">'
+          + '<svg width="40" height="56" viewBox="0 0 40 56" xmlns="http://www.w3.org/2000/svg">'
+          + '<defs><filter id="dsd' + i + '" x="-50%" y="-20%" width="200%" height="180%">'
+          + '<feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000" flood-opacity=".7"/>'
+          + '</filter></defs>'
+          + '<path d="M20 2C11.163 2 4 9.163 4 18c0 14 16 36 16 36s16-22 16-36C36 9.163 28.837 2 20 2z"'
+          + ' fill="#181510" stroke="#c9a84c" stroke-width="2" filter="url(#dsd' + i + ')"/>'
+          + '<circle cx="20" cy="18" r="10" fill="#c9a84c" opacity=".18"/>'
+          + '<circle cx="20" cy="18" r="6" fill="#c9a84c" opacity=".3"/>'
+          + '</svg>'
+          + '<div style="position:absolute;top:10px;left:0;width:40px;text-align:center;'
+          + 'font-family:Cinzel,serif;font-size:14px;font-weight:600;color:#c9a84c;line-height:1">'
+          + num
+          + '</div></div>'
+    });
+
+    var m = L.marker(d.coords, { icon: icon })
+      .bindPopup(buildDayPopup(d), { minWidth: 240, maxWidth: 300, autoPan: false })
+      .on('click', function() { selectDay(i); })
+      .addTo(map);
+    markers.push(m);
+  });
+
+  // ── Landmark markers (gold hexagon, hover tooltip, click popup) ────────
+  createTooltip();
+
+  landmarks.forEach(function(lm) {
+    var icon = L.divIcon({
+      className: 'lm-marker',
+      iconAnchor: [22, 22],
+      popupAnchor: [0, -26],
+      html: '<div class="lm-pin">'
+          + '<svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">'
+          + '<defs><filter id="lmf" x="-40%" y="-40%" width="180%" height="180%">'
+          + '<feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity=".65"/>'
+          + '</filter></defs>'
+          + '<polygon points="22,2 40,12 40,32 22,42 4,32 4,12"'
+          + ' fill="#1e1a12" stroke="#c9a84c" stroke-width="2" filter="url(#lmf)"/>'
+          + '<polygon points="22,7 36,15 36,29 22,37 8,29 8,15"'
+          + ' fill="none" stroke="#c9a84c" stroke-width="0.7" opacity=".35"/>'
+          + '</svg>'
+          + '<div class="lm-label">' + lm.label + '</div>'
+          + '</div>'
+    });
+
+    var marker = L.marker(lm.coords, { icon: icon })
+      .bindPopup(buildLandmarkPopup(lm), { minWidth: 220, maxWidth: 280, autoPan: false })
+      .addTo(map);
+
+    // Wire hover events onto the DOM element after it's added
+    marker.on('add', function() {
+      var el = marker.getElement();
+      if (!el) return;
+      el.addEventListener('mouseenter', function(e) { showTooltip(e, lm); });
+      el.addEventListener('mousemove',  function(e) { moveTooltip(e); });
+      el.addEventListener('mouseleave', function()  { hideTooltip(); });
+      el.addEventListener('click',      function()  { hideTooltip(); });
+    });
+  });
+
+  drawRoutes();
+  var group = L.featureGroup(markers);
+  map.fitBounds(group.getBounds().pad(0.22));
+}
+
+// ── Popup builders ─────────────────────────────────────────────────────────
+function buildDayPopup(d) {
+  var rows = d.attractions.map(function(a) {
+    return '<div class="pop-row">'
+      + '<span class="pop-name">' + a.name + '</span>'
+      + '<span class="pop-stars">' + fmtRating(a.rating) + '</span>'
+      + '</div>';
+  }).join('');
+  return '<div class="pop"><div class="pop-city">' + d.city + '</div>'
+    + rows
+    + '<div class="pop-stay">' +(d.stay || 'вкъщи')+ '</div></div>';
+}
+
+function buildLandmarkPopup(lm) {
+  return '<div class="pop">'
+    + '<div style="font-family:\'DM Mono\',monospace;font-size:8px;letter-spacing:.22em;'
+    + 'color:#c9a84c;text-transform:uppercase;margin-bottom:6px">'
+    + lm.label + ' &nbsp;·&nbsp; ' + lm.detour + '</div>'
+    + '<div class="pop-city" style="margin-bottom:8px">' + lm.name + '</div>'
+    + '<div style="font-family:\'Cormorant Garamond\',Georgia,serif;font-style:italic;'
+    + 'font-size:13px;color:rgba(240,235,224,.78);line-height:1.65">' + lm.note + '</div>'
+    + '</div>';
+}
+
+// ── Routes ─────────────────────────────────────────────────────────────────
+async function drawRoutes() {
+  for (var i = 0; i < days.length - 1; i++) {
+    await drawSegment(days[i].coords, days[i+1].coords, days[i].distNext);
+  }
+}
+
+async function drawSegment(a, b, label) {
+  try {
+    var url = 'https://router.project-osrm.org/route/v1/driving/'
+      + a[1]+','+a[0]+';'+b[1]+','+b[0]+'?overview=full&geometries=geojson';
+    var res  = await fetch(url);
+    var json = await res.json();
+    if (json.routes && json.routes[0]) {
+      var lls = json.routes[0].geometry.coordinates.map(function(c){ return [c[1],c[0]]; });
+      L.polyline(lls, { color:'#c9a84c', weight:7,   opacity:.15, smoothFactor:1 }).addTo(map);
+      L.polyline(lls, { color:'#e2c97e', weight:2.5, opacity:.88, smoothFactor:1 }).addTo(map);
+      }
+  } catch(_) {
+    L.polyline([a,b], { color:'#c9a84c', weight:2.5, opacity:.7, dashArray:'6 5' }).addTo(map);
+  }
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function fmtRating(r) {
+  var n = parseFloat(r), full = Math.floor(n), half = (n-full)>=.5;
+  var empty = 5 - full - (half?1:0), s = '';
+  for(var i=0;i<full;i++)  s += '\u2605';
+  if(half)                  s += '\u00BD';
+  for(var i=0;i<empty;i++) s += '\u2606';
+  return n.toFixed(1) + ' ' + s;
+}
+
+// ── Sidebar render ─────────────────────────────────────────────────────────
+function render() {
+  var list = document.getElementById('daysList');
+  list.innerHTML = '';
+
+  days.forEach(function(d, di) {
+    var card = document.createElement('div');
+    card.className = 'day-card' + (di === activeDay ? ' active' : '');
+
+    var attrHtml = d.attractions.map(function(a) {
+      var factHtml = Object.entries(a.facts||{}).map(function(e) {
+        return '<div class="fact"><span class="fact-label">'+e[0]+'</span>'
+             + '<span class="fact-value">'+e[1]+'</span></div>';
+      }).join('');
+      return '<div class="attr-row">'
+        + '<div class="attr-header">'
+        + '<div class="attr-accent"></div>'
+        + '<div class="attr-header-text">'
+        + '<div class="attr-name">'+a.name+'</div>'
+        + '<div class="attr-meta">'
+        + '<span class="attr-type">'+a.type+'</span>'
+        + '<span class="attr-rating">'+fmtRating(a.rating)+'</span>'
+        + '</div></div>'
+        + '<div class="attr-chevron"><svg viewBox="0 0 10 6"><polyline points="1,1 5,5 9,1"/></svg></div>'
+        + '</div>'
+        + '<div class="attr-body"><div class="attr-body-inner">'
+        + (factHtml ? '<div class="attr-facts">'+factHtml+'</div>' : '')
+        + '<p class="attr-desc">'+a.desc+'</p>'
+        + (a.tip ? '<div class="attr-tip"><div class="attr-tip-dot"></div>'+a.tip+'</div>' : '')
+        + '</div></div></div>';
+    }).join('');
+
+    card.innerHTML =
+      '<div class="card-head">'
+      + '<div class="day-tab">'
+      + '<div class="day-num">'+String(di+1).padStart(2,'0')+'</div>'
+      + '<div class="day-word">ден</div>'
+      + '</div>'
+      + '<div class="card-info">'
+      + '<div class="card-city">'+d.city+'</div>'
+      + '<div class="card-tagline">'+d.tagline+'</div>'
+      + '</div></div>'
+      + '<div class="attractions">'+attrHtml+'</div>'
+      + '<div class="card-stay">'
+      + '<div class="stay-icon">&#9790;</div>'
+      + '<div class="stay-text">'+(d.stay || 'вкъщи')+'</div>'
+      + '</div>';
+
+    card.querySelector('.card-head').addEventListener('click', function(){ selectDay(di); });
+    card.querySelectorAll('.attr-row').forEach(function(row){
+      row.addEventListener('click', function(e){ e.stopPropagation(); row.classList.toggle('open'); });
+    });
+
+    list.appendChild(card);
+
+    // Distance separator — sits OUTSIDE the card, between cards
+    if (d.distNext) {
+      var pill = document.createElement('div');
+      pill.className = 'dist-pill';
+      pill.innerHTML =
+        '<div class="dist-pill-line"></div>'
+        + '<div class="dist-pill-badge">'
+        + '<span class="dist-pill-arrow">&#9658;</span>'
+        + d.distNext
+        + '</div>'
+        + '<div class="dist-pill-line"></div>';
+      list.appendChild(pill);
+    }
+
+  });
+
+  document.getElementById('badgeNum').textContent = String(activeDay+1).padStart(2,'0');
+}
+
+// ── Select day ─────────────────────────────────────────────────────────────
+function selectDay(i) {
+  if (flyTimer) clearTimeout(flyTimer);
+  activeDay = i;
+  render();
+  map.closePopup();
+  map.flyTo(days[i].coords, days[i].zoom, { animate:true, duration:0.9 });
+  flyTimer = setTimeout(function(){ markers[i].openPopup(); }, 1000);
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+initMap();
+render();
+selectDay(0);
+window.addEventListener('resize', function(){ map.invalidateSize(); });
+</script>
+</body>
+</html>
